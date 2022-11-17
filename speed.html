@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Social Media Access Speed Check</title>
+    <script type="text/javascript">
+    const _ = (elementIdentifier) => {
+        let byId = document.getElementById(elementIdentifier)
+        let byTag = document.getElementsByTagName(elementIdentifier);
+        let byClass = document.getElementsByClassName(elementIdentifier);
+        return byId ? byId : byTag.length ? byTag : byClass
+    }
+
+
+    async function measureConnectionSpeed(imageAddr, downloadSize, targetDivId) {
+
+        let startTime, endTime, spd;
+        updateStatus(targetDivId, "Testing...")
+
+
+        // const download = new Image();
+        // download.src = imageAddr + cacheBuster;
+        // await download.decode();
+
+        try {
+            let fetchConfig = {
+                mode: 'no-cors',
+                cache: 'no-cache',
+                referrerPolicy: 'strict-origin-when-cross-origin',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    "User-Agent": navigator.userAgent
+                }
+            }
+
+            //Start Testing
+            startTime = (new Date()).getTime();
+            await fetch(imageAddr, fetchConfig);
+            endTime = (new Date()).getTime();
+
+            //Calculate
+            let result = calcSpeed(startTime, endTime, downloadSize)
+            let spd = Math.round(Number(result.speedMbps))
+
+            //Display
+            updateStatus(targetDivId, "Done.");
+            _(`${targetDivId}_speed`).innerHTML += speedBoxHTML(result);
+
+        } catch (e) {
+            updateStatus(targetDivId, "Error");
+        }
+
+        return spd;
+    }
+
+    function calcSpeed(startTime, endTime, downloadSize) {
+
+        const duration = (endTime - startTime) / 1000;
+        const bitsLoaded = downloadSize * 8;
+        const speedBps = (bitsLoaded / duration).toFixed(2);
+        const speedKbps = (speedBps / 1024).toFixed(2);
+        const speedMbps = (speedKbps / 1024).toFixed(2);
+
+        return {
+            bitsLoaded,
+            speedBps,
+            speedBps,
+            speedKbps,
+            speedMbps
+        }
+    }
+
+    function updateStatus(id, status) {
+        _(`${id}_status`).innerHTML = status
+    }
+
+    function speedBoxHTML(json) {
+
+        let boxClass = `bg-purple-400 p-2 rounded border-b border-grey whitespace-pre`
+        let text = JSON.stringify(json, null, '\t');
+        let resultHTML = `<div class="${boxClass}">${text}</div>`;
+        return resultHTML;
+    }
+
+
+    let sources = [{
+            id: "twitter",
+            title: "Twitter",
+            target: {
+                url: "https://pbs.twimg.com/media/DElLjU-VwAI9Wb6?format=png&name=large",
+                size: 3206510
+            }
+        },
+        {
+            id: "facebook",
+            title: "Facebook",
+            target: {
+                url: "https://scontent.fist2-3.fna.fbcdn.net/v/t1.6435-9/101691353_10159703390966729_3951810223777251328_n.png?_nc_cat=103&ccb=1-7&_nc_sid=174925&_nc_ohc=fVjeO2RR_6sAX9lT8dK&_nc_ht=scontent.fist2-3.fna&oh=00_AfC5pbuwxa8OQiSSeYzi7OYFyvHaS_cNxbH9rgln6C8nDg&oe=639CD1DF",
+                size: 68004
+            }
+        },
+        {
+            id: "instagram",
+            title: "Instagram",
+            target: {
+                url: "https://scontent.fist2-4.fna.fbcdn.net/v/t39.8562-6/314176265_686207309456629_2843885951502615295_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6825c5&_nc_ohc=i10sPPKcdWQAX8MyOnp&_nc_ht=scontent.fist2-4.fna&oh=00_AfAB-KWhtVjAI-tACRNpACob2yW6GMWtBCD784tbNBnl_A&oe=637B1A11",
+                size: 493598
+            }
+        }
+
+
+
+    ];
+
+
+    function check(id) {
+        let site = sources.find((source) => {
+            return source.id == id
+        })
+
+        if (site) {
+            measureConnectionSpeed(site.target.url, site.target.size, id)
+        }
+    }
+
+
+    function listOptions() {
+
+        let buttonClass = `relative group overflow-hidden px-6 m-4 h-12 rounded-full flex space-x-2 items-center bg-gradient-to-r from-pink-500 to-purple-500 hover:to-purple-600`;
+        let buttonInnerClass = 'relative text-sm text-white';
+
+        let animatedSection = `<div class="flex items-center -space-x-3 translate-x-3">
+            <div class="w-2.5 h-[1.6px] rounded bg-white origin-left scale-x-0 transition duration-300 group-hover:scale-x-100"></div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 stroke-white -translate-x-2 transition duration-300 group-hover:translate-x-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>`;
+
+        sources.forEach((source) => {
+
+            let buttonTitle = `<span class="${buttonInnerClass}">${source.title}<br>Speed</span>`
+
+            let html = `<div class="border  m-2">
+    <button class="${buttonClass}" onclick="check('${source.id}')">${buttonTitle} ${animatedSection}</button>
+    <div id="${source.id}_status" class="text-center">Ready. </div>
+<div id="${source.id}_speed" class="p-2 bg-purple-200 grid gap-2"></div>
+</div>`;
+            _("sources").innerHTML += html
+
+        })
+
+
+    }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div class="m-2">
+        <h1 class="font-bold text-2xl">Speed Test</h1>
+        <div class="flex gap-5" id="sources">
+        </div>
+    </div>
+    <script type="text/javascript">
+    listOptions()
+    </script>
+</body>
+
+</html>
